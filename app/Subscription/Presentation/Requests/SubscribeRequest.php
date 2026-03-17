@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Http\Requests;
+namespace App\Subscription\Presentation\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class TestRequest extends FormRequest
+class SubscribeRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -14,8 +14,7 @@ class TestRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name'  => ['required', 'string'],
-            'value' => ['required'],
+            'plan_id' => ['required', 'string'],
         ];
     }
 }
