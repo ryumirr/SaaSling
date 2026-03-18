@@ -2,6 +2,7 @@
 
 namespace Tests;
 
+use App\Models\Account;
 use App\Models\User;
 use App\Subscription\Domain\Entities\Subscription;
 use App\Subscription\Domain\ValueObjects\Plan;
@@ -17,8 +18,15 @@ abstract class TestCase extends BaseTestCase
     // 유저 헬퍼
     // -------------------------------------------------------------------------
 
+    protected function createAccount(array $attributes = []): Account
+    {
+        return Account::factory()->create($attributes);
+    }
+
     protected function createUser(array $attributes = []): User
     {
+        $attributes['account_id'] ??= $this->createAccount()->id;
+
         return User::factory()->create($attributes);
     }
 
