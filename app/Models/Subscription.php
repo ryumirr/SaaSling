@@ -3,16 +3,18 @@
 namespace App\Models;
 
 use App\Builders\SubscriptionBuilder;
+use App\Shared\Traits\HasTenant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Subscription extends Model
 {
-    use HasFactory;
+    use HasFactory, HasTenant;
 
     protected $fillable = [
         'id',
+        'account_id',
         'user_id',
         'plan_id',
         'status',
