@@ -19,8 +19,6 @@ class WebhookController extends Controller
         $this->handlePaymentUseCase->execute(new HandlePaymentInput(
             orderId: $request->input('order_id'),
             status: $request->input('status'),    // 'paid' | 'failed'
-            payload: $request->getContent(),
-            signature: $request->header('X-Payment-Signature', ''),
         ));
 
         return response('OK', 200);
