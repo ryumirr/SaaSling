@@ -3,6 +3,7 @@
 namespace App\Subscription\Presentation\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Shared\Traits\JsonRespondController;
 use App\Subscription\Application\UseCases\Subscribe\SubscribeInput;
 use App\Subscription\Application\UseCases\Subscribe\SubscribeUseCase;
 use App\Subscription\Application\UseCases\Cancel\CancelInput;
@@ -13,6 +14,7 @@ use Illuminate\Http\JsonResponse;
 
 class SubscriptionController extends Controller
 {
+    use JsonRespondController;
     public function __construct(
         private SubscribeUseCase $subscribeUseCase,
         private CancelUseCase $cancelUseCase,
@@ -25,7 +27,7 @@ class SubscriptionController extends Controller
             planId: $request->validated('plan_id'),
         ));
 
-        return response()->json(new SubscriptionResource($output), 201);
+        return $this->respondCreated(new SubscriptionResource($output));
     }
 
     public function cancel(string $subscriptionId): JsonResponse
@@ -34,6 +36,6 @@ class SubscriptionController extends Controller
             subscriptionId: $subscriptionId,
         ));
 
-        return response()->json(new SubscriptionResource($output));
+        return $this->respondOk(new SubscriptionResource($output));
     }
 }
