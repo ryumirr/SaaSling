@@ -30,6 +30,17 @@ class InMemorySubscriptionRepository implements SubscriptionRepositoryInterface
         return null;
     }
 
+    public function hasActiveForUser(string $userId): bool
+    {
+        foreach ($this->store as $subscription) {
+            if ($subscription->userId === $userId && $subscription->isActive()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public function save(Subscription $subscription): void
     {
         $this->store[$subscription->id] = $subscription;

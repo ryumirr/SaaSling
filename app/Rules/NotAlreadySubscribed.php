@@ -2,19 +2,20 @@
 
 namespace App\Rules;
 
-use App\Models\Subscription;
+use App\Subscription\Domain\Repositories\SubscriptionRepositoryInterface;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
 
 class NotAlreadySubscribed implements ValidationRule
 {
-    public function __construct(private readonly string $userId) {}
+    public function __construct(
+        private readonly string $userId,
+        private readonly SubscriptionRepositoryInterface $subscriptionRepository,
+    ) {}
 
-    public function validate(string $attribute, mixed $value, Closure $fail): void
+    public function validate(string $_attribute, mixed $_value, Closure $fail): void
     {
-        $exists = Subscription::query()->forUser($this->userId)->active()->exists();
-
-        if ($exists) {
+        if ($this->subscriptionRepository->hasActiveForUser($this->userId)) {
             $fail('이미 활성 구독이 존재합니다.');
         }
     }

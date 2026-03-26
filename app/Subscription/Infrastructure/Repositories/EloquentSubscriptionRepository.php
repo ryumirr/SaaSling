@@ -24,6 +24,11 @@ class EloquentSubscriptionRepository implements SubscriptionRepositoryInterface
         return $record ? $this->toDomain($record) : null;
     }
 
+    public function hasActiveForUser(string $userId): bool
+    {
+        return \App\Models\Subscription::forUser($userId)->active()->exists();
+    }
+
     public function save(Subscription $subscription): void
     {
         \App\Models\Subscription::updateOrCreate(
