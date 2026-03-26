@@ -6,6 +6,7 @@ use App\Models\Account;
 use App\Models\User;
 use App\Subscription\Domain\Entities\Subscription;
 use App\Subscription\Domain\ValueObjects\Plan;
+use App\Subscription\Domain\ValueObjects\PlanInterval;
 use App\Subscription\Domain\ValueObjects\SubscriptionStatus;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -41,7 +42,7 @@ abstract class TestCase extends BaseTestCase
             name: $attributes['name'] ?? 'Premium Monthly',
             price: $attributes['price'] ?? 9900,
             currency: $attributes['currency'] ?? 'KRW',
-            interval: $attributes['interval'] ?? 'monthly',
+            interval: $attributes['interval'] ?? PlanInterval::Monthly,
         );
     }
 
