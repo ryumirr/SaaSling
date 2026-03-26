@@ -7,12 +7,14 @@ use App\Subscription\Domain\Repositories\SubscriptionRepositoryInterface;
 use App\Subscription\Domain\ValueObjects\Plan;
 use App\Subscription\Domain\ValueObjects\SubscriptionStatus;
 use App\Subscription\Application\Ports\PaymentGatewayInterface;
+use App\Shared\Contracts\UuidGeneratorInterface;
 
 class SubscribeUseCase
 {
     public function __construct(
         private SubscriptionRepositoryInterface $repository,
         private PaymentGatewayInterface $paymentGateway,
+        private UuidGeneratorInterface $uuidGenerator,
     ) {}
 
     public function execute(SubscribeInput $input): SubscribeOutput
@@ -30,7 +32,7 @@ class SubscribeUseCase
 
         $now          = new \DateTimeImmutable();
         $subscription = new Subscription(
-            id: \Illuminate\Support\Str::uuid(),
+            id: $this->uuidGenerator->generate(),
             userId: $input->userId,
             plan: $plan,
             status: SubscriptionStatus::ACTIVE,
