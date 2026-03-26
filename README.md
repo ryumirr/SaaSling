@@ -7,22 +7,66 @@ Laravel 12 기반 SaaS 템플릿. Premium 구독 모델을 Clean Architecture로
 - **Backend** Laravel 12, PHP 8.2+
 - **Database** SQLite (개발), MySQL (운영)
 - **Frontend** Vite 6, TailwindCSS 4
+- **인증** Laravel Sanctum
 - **결제** Stripe Billing
 - **테스트** PHPUnit 11
 
 ## 아키텍처
 
-Clean Architecture 기반. 의존성 방향:
+```
+ HTTP 요청
+    │
+    ▼
+┌─────────────────────────────────────────────────────────────┐
+│  Presentation                                               │
+│  Controller ──► Request (입력 검증) ──► Resource (응답 변환) │
+└─────────────────────┬───────────────────────────────────────┘
+                      │  UseCase 호출 (Input DTO)
+                      ▼
+┌─────────────────────────────────────────────────────────────┐
+│  Application                                                │
+│  UseCase ──► Domain 조합 ──► Port 인터페이스 호출           │
+└──────────┬──────────────────────────────┬───────────────────┘
+           │ 엔티티/값객체 사용            │ 인터페이스 의존
+           ▼                              ▼
+┌─────────────────────┐      ┌────────────────────────────────┐
+│  Domain             │      │  Infrastructure                │
+│  Entity             │      │  EloquentRepository            │
+│  ValueObject        │◄─────│  StripeGateway                 │
+│  Repository(interface)     │  RamseyUuidGenerator           │
+└─────────────────────┘      └────────────────────────────────┘
+
+           공통 유틸 (모든 레이어에서 사용)
+┌─────────────────────────────────────────────────────────────┐
+│  Shared                                                     │
+│  Contracts (UuidGeneratorInterface)                         │
+│  Traits    (HasTenant → 쿼리 자동 테넌트 필터링)             │
+│  Exceptions (DomainException, NotFoundException 등)         │
+└─────────────────────────────────────────────────────────────┘
+```
+
+Domain은 순수 PHP. Laravel도 Stripe도 모른다. 의존성은 항상 Domain을 향한다.
+
+## 멀티테넌시
 
 ```
-Presentation → Application → Domain ← Infrastructure
+ HTTP 요청
+    │
+    ▼
+[Sanctum 미들웨어] ── 인증 실패 ──► 401
+    │ 인증 성공
+    ▼
+[HasTenant 글로벌 스코프]
+    │  auth()->user()->account_id 로 WHERE 자동 추가
+    ▼
+ DB 쿼리 (account_id = ? 격리)
+
+ 인증 컨텍스트 없음 (Queue / CLI)
+    └──► RuntimeException (fail-close)
+         관리자 전체 조회 필요 시: Model::withoutTenant()
 ```
 
-- **Domain** 순수 PHP. 비즈니스 규칙만. Laravel/Stripe 모름.
-- **Application** UseCase. Domain을 조합해서 흐름을 만듦.
-- **Infrastructure** DB, Stripe 등 외부 연동.
-- **Presentation** REST API. Controller, Request, Resource.
-- **Shared** 공통 유틸. Traits, Exceptions.
+`Account` 1개 = 테넌트 1개. `User`와 `Subscription`은 모두 `account_id`로 소속 계정에 격리된다.
 
 ## 디렉토리 구조
 
@@ -31,19 +75,26 @@ app/
 ├── Builders/                       # Custom Eloquent Query Builder
 │   └── SubscriptionBuilder.php
 ├── Models/                         # Eloquent 모델 (Infrastructure에서 사용)
+│   ├── Account.php                 # 테넌트 단위
 │   ├── User.php
 │   └── Subscription.php
 ├── Rules/                          # Custom Validation Rules
 │   ├── ValidPlanId.php
 │   └── NotAlreadySubscribed.php
 ├── Shared/                         # 공통 유틸
+│   ├── Contracts/                  # UuidGeneratorInterface
 │   ├── Exceptions/                 # DomainException, NotFoundException 등
-│   └── Traits/                     # Singleton 등
+│   ├── Infrastructure/             # RamseyUuidGenerator
+│   └── Traits/                     # HasTenant, Singleton
+│
+├── Checkout/                       # 결제 주문 도메인
+│   └── Application/
+│       └── UseCases/CreateOrder/   # Input, Output, UseCase
 │
 └── Subscription/                   # Premium 구독 도메인
     ├── Domain/
     │   ├── Entities/               # Subscription
-    │   ├── ValueObjects/           # Plan, SubscriptionStatus
+    │   ├── ValueObjects/           # Plan, PlanInterval, SubscriptionStatus
     │   └── Repositories/           # SubscriptionRepositoryInterface
     ├── Application/
     │   ├── Ports/                  # PaymentGatewayInterface
@@ -62,7 +113,8 @@ app/
 tests/
 ├── Stubs/                          # 테스트 전용 가짜 구현체
 │   ├── InMemorySubscriptionRepository.php
-│   └── FakePaymentGateway.php
+│   ├── FakePaymentGateway.php
+│   └── FakeUuidGenerator.php
 ├── Unit/Subscription/
 │   ├── Domain/                     # 엔티티 비즈니스 규칙 테스트
 │   └── Application/                # UseCase 테스트 (DB/Stripe 없이)
