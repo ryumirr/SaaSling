@@ -9,6 +9,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 /**
  * 멀티테넌시 트레이트.
  * 이 트레이트를 사용하는 모델은 항상 현재 인증된 유저의 account_id로 필터링된다.
+ * 인증 컨텍스트가 없는 경우(Queue, CLI 등) 예외를 던진다 (fail-close).
+ * 인증 없이 전체 조회가 필요한 경우 withoutTenant()를 명시적으로 호출할 것.
  *
  * 사용법: 모델에 `use HasTenant;` 추가
  * 조건: 모델 테이블에 `account_id` 컬럼이 있어야 함
@@ -19,12 +21,16 @@ trait HasTenant
     {
         // 글로벌 스코프: 모든 쿼리에 account_id 자동 필터링
         static::addGlobalScope('tenant', function (Builder $query) {
-            if (auth()->check()) {
-                $query->where(
-                    (new static())->getTable() . '.account_id',
-                    auth()->user()->account_id
+            if (!auth()->check()) {
+                throw new \RuntimeException(
+                    static::class . ' requires an authenticated tenant context. Use withoutTenant() to bypass explicitly.'
                 );
             }
+
+            $query->where(
+                (new static())->getTable() . '.account_id',
+                auth()->user()->account_id
+            );
         });
 
         // 생성 시 account_id 자동 할당
