@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Rules;
+namespace App\Subscription\Presentation\Rules;
 
 use App\Subscription\Domain\Repositories\SubscriptionRepositoryInterface;
 use Closure;

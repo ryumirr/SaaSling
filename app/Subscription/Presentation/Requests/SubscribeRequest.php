@@ -2,7 +2,7 @@
 
 namespace App\Subscription\Presentation\Requests;
 
-use App\Rules\NotAlreadySubscribed;
+use App\Subscription\Presentation\Rules\NotAlreadySubscribed;
 use App\Rules\ValidPlanId;
 use App\Subscription\Domain\Repositories\SubscriptionRepositoryInterface;
 use Illuminate\Foundation\Http\FormRequest;
