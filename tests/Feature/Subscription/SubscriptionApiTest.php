@@ -5,6 +5,7 @@ namespace Tests\Feature\Subscription;
 use App\Subscription\Application\UseCases\Subscribe\SubscribeUseCase;
 use App\Subscription\Application\UseCases\Cancel\CancelUseCase;
 use Tests\Stubs\FakePaymentGateway;
+use Tests\Stubs\FakeUuidGenerator;
 use Tests\Stubs\InMemorySubscriptionRepository;
 use Tests\TestCase;
 
@@ -25,7 +26,7 @@ class SubscriptionApiTest extends TestCase
         $this->gateway    = new FakePaymentGateway();
 
         // 컨테이너에 Fake 구현체 바인딩
-        $this->app->instance(SubscribeUseCase::class, new SubscribeUseCase($this->repository, $this->gateway));
+        $this->app->instance(SubscribeUseCase::class, new SubscribeUseCase($this->repository, $this->gateway, new FakeUuidGenerator()));
         $this->app->instance(CancelUseCase::class, new CancelUseCase($this->repository, $this->gateway));
     }
 

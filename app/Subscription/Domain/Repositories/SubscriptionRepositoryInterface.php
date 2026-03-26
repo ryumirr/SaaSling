@@ -8,5 +8,6 @@ interface SubscriptionRepositoryInterface
 {
     public function findById(string $id): ?Subscription;
     public function findByUserId(string $userId): ?Subscription;
+    public function hasActiveForUser(string $userId): bool;
     public function save(Subscription $subscription): void;
 }

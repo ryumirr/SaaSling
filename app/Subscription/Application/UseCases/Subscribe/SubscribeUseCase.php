@@ -5,6 +5,7 @@ namespace App\Subscription\Application\UseCases\Subscribe;
 use App\Subscription\Domain\Entities\Subscription;
 use App\Subscription\Domain\Repositories\SubscriptionRepositoryInterface;
 use App\Subscription\Domain\ValueObjects\Plan;
+use App\Subscription\Domain\ValueObjects\PlanInterval;
 use App\Subscription\Domain\ValueObjects\SubscriptionStatus;
 use App\Subscription\Application\Ports\PaymentGatewayInterface;
 use App\Shared\Contracts\UuidGeneratorInterface;
@@ -25,7 +26,7 @@ class SubscribeUseCase
             name: 'Premium',
             price: 9900,
             currency: 'KRW',
-            interval: 'monthly',
+            interval: PlanInterval::Monthly,
         );
 
         $this->paymentGateway->createSubscription($input->userId, $plan);

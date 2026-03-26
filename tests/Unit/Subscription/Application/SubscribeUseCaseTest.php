@@ -6,6 +6,7 @@ use App\Subscription\Application\UseCases\Subscribe\SubscribeInput;
 use App\Subscription\Application\UseCases\Subscribe\SubscribeUseCase;
 use App\Subscription\Domain\ValueObjects\SubscriptionStatus;
 use Tests\Stubs\FakePaymentGateway;
+use Tests\Stubs\FakeUuidGenerator;
 use Tests\Stubs\InMemorySubscriptionRepository;
 use Tests\TestCase;
 
@@ -22,7 +23,7 @@ class SubscribeUseCaseTest extends TestCase
         // DB도 Stripe도 없이 순수하게 테스트
         $this->repository = new InMemorySubscriptionRepository();
         $this->gateway    = new FakePaymentGateway();
-        $this->useCase    = new SubscribeUseCase($this->repository, $this->gateway);
+        $this->useCase    = new SubscribeUseCase($this->repository, $this->gateway, new FakeUuidGenerator());
     }
 
     public function test_creates_subscription_with_active_status(): void

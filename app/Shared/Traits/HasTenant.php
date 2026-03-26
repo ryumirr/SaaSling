@@ -1,0 +1,49 @@
+<?php
+
+namespace App\Shared\Traits;
+
+use Illuminate\Database\Eloquent\Builder;
+
+/**
+ * 멀티테넌시 트레이트.
+ * 이 트레이트를 사용하는 모델은 항상 현재 인증된 유저의 account_id로 필터링된다.
+ * 인증 컨텍스트가 없는 경우(Queue, CLI 등) 예외를 던진다 (fail-close).
+ * 인증 없이 전체 조회가 필요한 경우 withoutTenant()를 명시적으로 호출할 것.
+ *
+ * 사용법: 모델에 `use HasTenant;` 추가
+ * 조건: 모델 테이블에 `account_id` 컬럼이 있어야 함
+ */
+trait HasTenant
+{
+    public static function bootHasTenant(): void
+    {
+        // 글로벌 스코프: 모든 쿼리에 account_id 자동 필터링
+        static::addGlobalScope('tenant', function (Builder $query) {
+            if (!auth()->check()) {
+                throw new \RuntimeException(
+                    static::class . ' requires an authenticated tenant context. Use withoutTenant() to bypass explicitly.'
+                );
+            }
+
+            $query->where(
+                (new static())->getTable() . '.account_id',
+                auth()->user()->account_id
+            );
+        });
+
+        // 생성 시 account_id 자동 할당
+        static::creating(function ($model) {
+            if (auth()->check() && empty($model->account_id)) {
+                $model->account_id = auth()->user()->account_id;
+            }
+        });
+    }
+
+    /**
+     * 글로벌 스코프를 무시하고 전체 계정 데이터 조회 (관리자용)
+     */
+    public static function withoutTenant(): Builder
+    {
+        return static::withoutGlobalScope('tenant');
+    }
+}

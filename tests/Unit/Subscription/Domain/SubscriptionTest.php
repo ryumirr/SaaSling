@@ -3,6 +3,7 @@
 namespace Tests\Unit\Subscription\Domain;
 
 use App\Shared\Exceptions\DomainException;
+use App\Subscription\Domain\ValueObjects\PlanInterval;
 use App\Subscription\Domain\ValueObjects\SubscriptionStatus;
 use Tests\TestCase;
 
@@ -76,7 +77,7 @@ class SubscriptionTest extends TestCase
         $endDate      = new \DateTimeImmutable('2026-03-18');
         $subscription = $this->makeSubscription([
             'endDate' => $endDate,
-            'plan'    => $this->makePlan(['interval' => 'monthly']),
+            'plan'    => $this->makePlan(['interval' => PlanInterval::Monthly]),
         ]);
 
         $subscription->renew();
@@ -89,7 +90,7 @@ class SubscriptionTest extends TestCase
         $endDate      = new \DateTimeImmutable('2026-03-18');
         $subscription = $this->makeSubscription([
             'endDate' => $endDate,
-            'plan'    => $this->makePlan(['interval' => 'yearly']),
+            'plan'    => $this->makePlan(['interval' => PlanInterval::Yearly]),
         ]);
 
         $subscription->renew();

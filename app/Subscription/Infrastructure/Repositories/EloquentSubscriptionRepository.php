@@ -5,6 +5,7 @@ namespace App\Subscription\Infrastructure\Repositories;
 use App\Subscription\Domain\Entities\Subscription;
 use App\Subscription\Domain\Repositories\SubscriptionRepositoryInterface;
 use App\Subscription\Domain\ValueObjects\Plan;
+use App\Subscription\Domain\ValueObjects\PlanInterval;
 use App\Subscription\Domain\ValueObjects\SubscriptionStatus;
 
 class EloquentSubscriptionRepository implements SubscriptionRepositoryInterface
@@ -21,6 +22,11 @@ class EloquentSubscriptionRepository implements SubscriptionRepositoryInterface
         $record = \App\Models\Subscription::where('user_id', $userId)->latest()->first();
 
         return $record ? $this->toDomain($record) : null;
+    }
+
+    public function hasActiveForUser(string $userId): bool
+    {
+        return \App\Models\Subscription::forUser($userId)->active()->exists();
     }
 
     public function save(Subscription $subscription): void
@@ -44,7 +50,7 @@ class EloquentSubscriptionRepository implements SubscriptionRepositoryInterface
             name: $record->plan->name,
             price: $record->plan->price,
             currency: $record->plan->currency,
-            interval: $record->plan->interval,
+            interval: PlanInterval::from($record->plan->interval),
         );
 
         return new Subscription(
