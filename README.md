@@ -79,8 +79,7 @@ app/
 │   ├── User.php
 │   └── Subscription.php
 ├── Rules/                          # Custom Validation Rules
-│   ├── ValidPlanId.php
-│   └── NotAlreadySubscribed.php
+│   └── ValidPlanId.php
 ├── Shared/                         # 공통 유틸
 │   ├── Contracts/                  # UuidGeneratorInterface
 │   ├── Exceptions/                 # DomainException, NotFoundException 등
@@ -108,7 +107,8 @@ app/
     └── Presentation/
         ├── Controllers/            # SubscriptionController
         ├── Requests/               # SubscribeRequest
-        └── Resources/              # SubscriptionResource
+        ├── Resources/              # SubscriptionResource
+        └── Rules/                  # NotAlreadySubscribed
 
 tests/
 ├── Stubs/                          # 테스트 전용 가짜 구현체
