@@ -2,9 +2,7 @@
 
 namespace App\Shared\Traits;
 
-use App\Models\Account;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * 멀티테넌시 트레이트.
@@ -39,11 +37,6 @@ trait HasTenant
                 $model->account_id = auth()->user()->account_id;
             }
         });
-    }
-
-    public function account(): BelongsTo
-    {
-        return $this->belongsTo(Account::class);
     }
 
     /**
