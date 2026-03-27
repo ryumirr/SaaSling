@@ -4,22 +4,22 @@ namespace Tests\Unit;
 
 use Tests\TestCase;
 use App\Shared\Infrastructure\Slack\SlackNotificationService;
+use Illuminate\Support\Facades\Notification;
 
 class SlackTest extends TestCase
 {
     /**
-     * A basic test example.
+     * Ensure the Slack notification service dispatches a notification via Laravel's notification system.
      */
-    public function test_slack_notification_service(): void
+    public function test_slack_notification_service_dispatches_notification(): void
     {
+        Notification::fake();
+
         $message = 'Hello, Slack! I\'m a test message';
 
-        $this->mock(SlackNotificationService::class, function ($mock) use ($message) {
-            $mock->shouldReceive('send')
-                ->once()
-                ->with($message);
-        });
+        $service = app(SlackNotificationService::class);
+        $service->send($message);
 
-        app(SlackNotificationService::class)->send($message);
+        Notification::assertSentOnDemandTimes(1);
     }
 }
