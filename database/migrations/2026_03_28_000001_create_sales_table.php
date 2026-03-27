@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('sales', function (Blueprint $table) {
             $table->id();
             $table->string('order_id');
-            $table->foreign('order_id')->references('order_id')->on('orders');
+            $table->foreign('order_id')->references('order_id')->on('orders')->onDelete('cascade');
             $table->foreignId('user_id')->constrained();   // 이력 보험용 중복
             $table->string('item_name');
             $table->unsignedInteger('price');
