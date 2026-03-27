@@ -12,7 +12,7 @@ class SlackTest extends TestCase
      */
     public function test_slack_notification_service(): void
     {
-        $message = 'Hello, Slack! \'m a test message';
+        $message = 'Hello, Slack! I\'m a test message';
 
         $this->mock(SlackNotificationService::class, function ($mock) use ($message) {
             $mock->shouldReceive('send')
