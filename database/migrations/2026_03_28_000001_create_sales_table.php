@@ -17,7 +17,7 @@ return new class extends Migration
             $table->unsignedInteger('price');
             $table->unsignedTinyInteger('quantity')->default(1);
             $table->unsignedTinyInteger('months');         // 구독 개월 수 (1/3/6/12)
-            $table->enum('payment_status', ['READY', 'UNPAYED', 'PENDING', 'PAYED', 'CANCELED', 'INVALID'])
+            $table->enum('payment_status', ['READY', 'UNPAID', 'PENDING', 'PAID', 'CANCELED', 'INVALID'])
                   ->default('READY');
             $table->timestamp('created_at')->useCurrent();  // insert-only, updated_at 없음
         });
