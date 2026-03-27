@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('user_memberships', function (Blueprint $table) {
             $table->foreignId('user_id')->primary()->constrained()->cascadeOnDelete();
             $table->string('premium_status')->default('FREE');
-            $table->timestamp('grade_changed_at')->nullable();
+            $table->timestamp('premium_status_changed_at')->nullable();
             $table->timestamps();
         });
     }
