@@ -7,8 +7,8 @@ interface SlackNotificationServiceInterface
     /**
      * Slackメッセージ送信
      *
-     * @param  mixed $message
+     * @param  string $content
      * @return void
      */
-    public function send($content): void;
+    public function send(string $content): void;
 }
