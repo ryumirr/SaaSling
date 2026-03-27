@@ -5,7 +5,6 @@ namespace App\Facades;
 use Illuminate\Support\Facades\Facade;
 
 /**
- * @method static bool used()
  */
 class Slack extends Facade
 {
