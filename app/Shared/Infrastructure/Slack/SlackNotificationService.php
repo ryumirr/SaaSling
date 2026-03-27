@@ -14,7 +14,7 @@ class SlackNotificationService implements SlackNotificationServiceInterface
         $this->notify(new SlackNotification($content));
     }
 
-    protected function routeNotificationForSlack()
+    protected function routeNotificationForSlack($notification = null)
     {
         return config('slack.webhook_url');
     }
