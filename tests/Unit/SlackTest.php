@@ -3,6 +3,7 @@
 namespace Tests\Unit;
 
 use Tests\TestCase;
+use App\Shared\Infrastructure\Slack\SlackNotification;
 use App\Shared\Infrastructure\Slack\SlackNotificationService;
 use Illuminate\Support\Facades\Notification;
 
@@ -20,6 +21,6 @@ class SlackTest extends TestCase
         $service = app(SlackNotificationService::class);
         $service->send($message);
 
-        Notification::assertSentOnDemandTimes(1);
+        Notification::assertSentTimes(SlackNotification::class, 1);
     }
 }
