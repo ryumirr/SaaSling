@@ -13,8 +13,13 @@ class SlackTest extends TestCase
     public function test_slack_notification_service(): void
     {
         $message = 'Hello, Slack! \'m a test message';
-        $SlackNotificationService = app(SlackNotificationService::class);
-        $this->expectNotToPerformAssertions();
-        $SlackNotificationService->send($message);
+
+        $this->mock(SlackNotificationService::class, function ($mock) use ($message) {
+            $mock->shouldReceive('send')
+                ->once()
+                ->with($message);
+        });
+
+        app(SlackNotificationService::class)->send($message);
     }
 }
