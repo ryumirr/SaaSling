@@ -9,7 +9,7 @@ class SlackNotificationService implements SlackNotificationServiceInterface
 {
     use Notifiable;
 
-    public function send($content): void
+    public function send(string $content): void
     {
         $this->notify(new SlackNotification($content));
     }
