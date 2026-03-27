@@ -14,10 +14,12 @@ class SlackNotificationProvider extends ServiceProvider
      */
     public function register()
     {
-        app()->singleton(
-            'Slack',
+        $this->app->singleton(
+            SlackNotificationService::class,
             SlackNotificationService::class
         );
+
+        $this->app->alias(SlackNotificationService::class, 'Slack');
     }
 
     /**
