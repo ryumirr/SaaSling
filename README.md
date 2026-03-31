@@ -1,61 +1,164 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# SaaSling
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Laravel 12 기반 SaaS 템플릿. Premium 구독 모델을 Clean Architecture로 구현한다.
 
-## About Laravel
+## 기술 스택
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- **Backend** Laravel 12, PHP 8.2+
+- **Database** SQLite (개발), MySQL (운영)
+- **Frontend** Vite 6, TailwindCSS 4
+- **인증** Laravel Sanctum
+- **결제** Stripe Billing
+- **테스트** PHPUnit 11
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## 아키텍처
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+```
+ HTTP 요청
+    │
+    ▼
+┌─────────────────────────────────────────────────────────────┐
+│  Presentation                                               │
+│  Controller ──► Request (입력 검증) ──► Resource (응답 변환) │
+└─────────────────────┬───────────────────────────────────────┘
+                      │  UseCase 호출 (Input DTO)
+                      ▼
+┌─────────────────────────────────────────────────────────────┐
+│  Application                                                │
+│  UseCase ──► Domain 조합 ──► Port 인터페이스 호출           │
+└──────────┬──────────────────────────────┬───────────────────┘
+           │ 엔티티/값객체 사용            │ 인터페이스 의존
+           ▼                              ▼
+┌─────────────────────┐      ┌────────────────────────────────┐
+│  Domain             │      │  Infrastructure                │
+│  Entity             │      │  EloquentRepository            │
+│  ValueObject        │◄─────│  StripeGateway                 │
+│  Repository(interface)     │  RamseyUuidGenerator           │
+└─────────────────────┘      └────────────────────────────────┘
 
-## Learning Laravel
+           공통 유틸 (모든 레이어에서 사용)
+┌─────────────────────────────────────────────────────────────┐
+│  Shared                                                     │
+│  Contracts (UuidGeneratorInterface)                         │
+│  Traits    (HasTenant → 쿼리 자동 테넌트 필터링)             │
+│  Exceptions (DomainException, NotFoundException 등)         │
+└─────────────────────────────────────────────────────────────┘
+```
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+Domain은 순수 PHP. Laravel도 Stripe도 모른다. 의존성은 항상 Domain을 향한다.
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+## 멀티테넌시
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+```
+ HTTP 요청
+    │
+    ▼
+[Sanctum 미들웨어] ── 인증 실패 ──► 401
+    │ 인증 성공
+    ▼
+[HasTenant 글로벌 스코프]
+    │  auth()->user()->account_id 로 WHERE 자동 추가
+    ▼
+ DB 쿼리 (account_id = ? 격리)
 
-## Laravel Sponsors
+ 인증 컨텍스트 없음 (Queue / CLI)
+    └──► RuntimeException (fail-close)
+         관리자 전체 조회 필요 시: Model::withoutTenant()
+```
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+`Account` 1개 = 테넌트 1개. `User`와 `Subscription`은 모두 `account_id`로 소속 계정에 격리된다.
 
-### Premium Partners
+## 디렉토리 구조
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+```
+app/
+├── Builders/                       # Custom Eloquent Query Builder
+│   └── SubscriptionBuilder.php
+├── Models/                         # Eloquent 모델 (Infrastructure에서 사용)
+│   ├── Account.php                 # 테넌트 단위
+│   ├── User.php
+│   └── Subscription.php
+├── Rules/                          # Custom Validation Rules
+│   └── ValidPlanId.php
+├── Shared/                         # 공통 유틸
+│   ├── Contracts/                  # UuidGeneratorInterface
+│   ├── Exceptions/                 # DomainException, NotFoundException 등
+│   ├── Infrastructure/             # RamseyUuidGenerator
+│   └── Traits/                     # HasTenant, Singleton
+│
+├── Checkout/                       # 결제 주문 도메인
+│   └── Application/
+│       └── UseCases/CreateOrder/   # Input, Output, UseCase
+│
+└── Subscription/                   # Premium 구독 도메인
+    ├── Domain/
+    │   ├── Entities/               # Subscription
+    │   ├── ValueObjects/           # Plan, PlanInterval, SubscriptionStatus
+    │   └── Repositories/           # SubscriptionRepositoryInterface
+    ├── Application/
+    │   ├── Ports/                  # PaymentGatewayInterface
+    │   └── UseCases/
+    │       ├── Subscribe/          # Input, Output, UseCase
+    │       ├── Cancel/             # Input, Output, UseCase
+    │       └── Renew/              # Input, Output, UseCase
+    ├── Infrastructure/
+    │   ├── Gateways/               # StripeSubscriptionGateway
+    │   └── Repositories/           # EloquentSubscriptionRepository
+    └── Presentation/
+        ├── Controllers/            # SubscriptionController
+        ├── Requests/               # SubscribeRequest
+        ├── Resources/              # SubscriptionResource
+        └── Rules/                  # NotAlreadySubscribed
 
-## Contributing
+tests/
+├── Stubs/                          # 테스트 전용 가짜 구현체
+│   ├── InMemorySubscriptionRepository.php
+│   ├── FakePaymentGateway.php
+│   └── FakeUuidGenerator.php
+├── Unit/Subscription/
+│   ├── Domain/                     # 엔티티 비즈니스 규칙 테스트
+│   └── Application/                # UseCase 테스트 (DB/Stripe 없이)
+├── Feature/Subscription/           # HTTP API 엔드포인트 테스트
+└── TestCase.php                    # 공통 헬퍼 (makePlan, makeSubscription 등)
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## 테스트 전략
 
-## Code of Conduct
+```
+Unit 테스트   — DB도 Stripe도 없이 순수 PHP 로직만 검증
+Feature 테스트 — HTTP 레벨 검증, Fake 구현체로 외부 의존성 제거
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Clean Architecture의 핵심 장점: Domain/UseCase는 외부 의존성 없이 테스트 가능.
 
-## Security Vulnerabilities
+## API
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+```
+POST   /api/subscriptions              구독 시작
+DELETE /api/subscriptions/{id}         구독 취소
+POST   /api/subscriptions/{id}/renew   구독 갱신
+```
 
-## License
+## 환경 설정
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+```bash
+cp .env.example .env
+composer install
+php artisan key:generate
+php artisan migrate
+npm install && npm run dev
+```
+
+`.env`에 Stripe 키 추가:
+
+```env
+STRIPE_KEY=pk_test_...
+STRIPE_SECRET=sk_test_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+```
+
+## 테스트 실행
+
+```bash
+composer test
+```

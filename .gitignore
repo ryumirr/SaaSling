@@ -22,3 +22,10 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+#
+/public/.htaccess
+.history
+
+TODO.md
+.history
